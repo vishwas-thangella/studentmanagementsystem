@@ -16,11 +16,9 @@ public class StudentManagementSystem extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Connect to SQLite
         connectToDatabase();
         createTableIfNotExists();
 
-        // UI Components
         JLabel nameLabel = new JLabel("Name:");
         JLabel rollLabel = new JLabel("Roll No:");
         JLabel courseLabel = new JLabel("Course:");
@@ -49,13 +47,9 @@ public class StudentManagementSystem extends JFrame {
         add(formPanel, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Load data on startup
         loadStudentData();
 
-        // Add student
         addButton.addActionListener(e -> addStudent());
-
-        // Delete student
         deleteButton.addActionListener(e -> deleteStudent());
 
         setVisible(true);
@@ -63,7 +57,10 @@ public class StudentManagementSystem extends JFrame {
 
     private void connectToDatabase() {
         try {
-            conn = DriverManager.getConnection("jdbc:sqlite:students.db");
+            String url = "jdbc:mysql://localhost:3306/student_db";
+            String username = "root";
+            String password = "your_password_here";
+            conn = DriverManager.getConnection(url, username, password);
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Database connection failed", "Error", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
@@ -73,10 +70,10 @@ public class StudentManagementSystem extends JFrame {
     private void createTableIfNotExists() {
         try (Statement stmt = conn.createStatement()) {
             String sql = "CREATE TABLE IF NOT EXISTS students (" +
-                    "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    "name TEXT NOT NULL, " +
-                    "roll TEXT NOT NULL, " +
-                    "course TEXT NOT NULL)";
+                    "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                    "name VARCHAR(100) NOT NULL, " +
+                    "roll VARCHAR(50) NOT NULL, " +
+                    "course VARCHAR(100) NOT NULL)";
             stmt.execute(sql);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -86,7 +83,6 @@ public class StudentManagementSystem extends JFrame {
     private void loadStudentData() {
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT * FROM students")) {
-
             while (rs.next()) {
                 int id = rs.getInt("id");
                 String name = rs.getString("name");
@@ -94,7 +90,6 @@ public class StudentManagementSystem extends JFrame {
                 String course = rs.getString("course");
                 tableModel.addRow(new Object[]{id, name, roll, course});
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -116,16 +111,11 @@ public class StudentManagementSystem extends JFrame {
             pstmt.setString(2, roll);
             pstmt.setString(3, course);
             pstmt.executeUpdate();
-
-            // Refresh Table
             tableModel.setRowCount(0);
             loadStudentData();
-
-            // Clear fields
             nameField.setText("");
             rollField.setText("");
             courseField.setText("");
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -143,11 +133,8 @@ public class StudentManagementSystem extends JFrame {
         try (PreparedStatement pstmt = conn.prepareStatement("DELETE FROM students WHERE id = ?")) {
             pstmt.setInt(1, studentId);
             pstmt.executeUpdate();
-
-            // Refresh Table
             tableModel.setRowCount(0);
             loadStudentData();
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
